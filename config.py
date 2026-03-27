@@ -1,0 +1,19 @@
+import os
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+load_dotenv()
+
+BASE_DIR = Path(__file__).resolve().parent
+
+PDF_FOLDER = os.path.expanduser(os.environ.get("PDF_FOLDER", ""))
+GOOGLE_SHEET_ID = os.environ.get("GOOGLE_SHEET_ID", "")
+SERVICE_ACCOUNT_JSON = os.environ.get("SERVICE_ACCOUNT_JSON", "credentials.json")
+PROCESSED_LOG = BASE_DIR / "processed_log.json"
+
+WORKSHEET_NAME = "受付情報一覧"
+HEADERS = ["試験名", "被験者番号", "性別", "採取日", "ポイント名", "検査項目"]
+
+OCR_DPI = 300
+OCR_LANG = "jpn"
