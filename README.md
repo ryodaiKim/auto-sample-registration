@@ -21,6 +21,29 @@ brew install tesseract tesseract-lang poppler
 sudo apt install tesseract-ocr tesseract-ocr-jpn poppler-utils
 ```
 
+### Windows
+
+#### 1. Install Tesseract
+
+1. Download the installer from [UB Mannheim](https://github.com/UB-Mannheim/tesseract/wiki)
+2. Run the installer — during setup, check **Additional language data** and select **Japanese**
+3. Note the install path (default: `C:\Program Files\Tesseract-OCR`)
+
+#### 2. Install Poppler
+
+1. Download from [poppler-windows releases](https://github.com/osber/poppler-windows/releases) (or use `conda install poppler`)
+2. Extract to a folder, e.g. `C:\poppler`
+3. Note the `bin` directory path (e.g. `C:\poppler\Library\bin`)
+
+#### 3. Set paths in `.env`
+
+```
+POPPLER_PATH=C:\poppler\Library\bin
+TESSERACT_CMD=C:\Program Files\Tesseract-OCR\tesseract.exe
+```
+
+> You do **not** need to add these to your system PATH — the pipeline reads them from `.env`.
+
 ## Setup
 
 ### 1. Clone and install
@@ -30,6 +53,14 @@ git clone https://github.com/ryodaiKim/auto-sample-registration.git
 cd auto-sample-registration
 python3 -m venv .venv
 source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+On Windows, replace the activate command:
+
+```powershell
+python -m venv .venv
+.venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
@@ -60,6 +91,12 @@ SERVICE_ACCOUNT_JSON=credentials.json
 
 The Sheet ID is the long string in the URL: `https://docs.google.com/spreadsheets/d/<SHEET_ID>/edit`
 
+On Windows, use a Windows-style path for `PDF_FOLDER`:
+
+```
+PDF_FOLDER=C:\Users\YourName\Google Drive\My Drive\検体受付_CIDP\01_初回登録
+```
+
 ## Usage
 
 ### Manual run
@@ -69,13 +106,22 @@ source .venv/bin/activate
 python pipeline.py
 ```
 
+On Windows:
+
+```powershell
+.venv\Scripts\activate
+python pipeline.py
+```
+
 ### Dry run (parse only, no sheet write)
 
 ```bash
 python pipeline.py --dry-run
 ```
 
-### Automated weekly run (cron)
+### Automated weekly run
+
+#### macOS/Linux (cron)
 
 ```bash
 crontab -e
@@ -88,6 +134,19 @@ Add this line (runs every Monday at 9:00 AM):
 ```
 
 Replace `/path/to/auto-sample-registration` with the actual path.
+
+#### Windows (Task Scheduler)
+
+1. Open **Task Scheduler** (`taskschd.msc`)
+2. Click **Create Basic Task**
+3. Name: `Auto Sample Registration`, Trigger: **Weekly** (Monday, 9:00 AM)
+4. Action: **Start a program**
+   - Program/script: `C:\path\to\auto-sample-registration\.venv\Scripts\python.exe`
+   - Arguments: `pipeline.py`
+   - Start in: `C:\path\to\auto-sample-registration`
+5. Finish
+
+> Replace `C:\path\to\auto-sample-registration` with the actual path.
 
 ## How it works
 
