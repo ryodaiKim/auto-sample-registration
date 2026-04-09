@@ -6,43 +6,58 @@ extracts structured data via image-based OCR, and writes results to a Google She
 ## Prerequisites
 
 - Python 3.10+
-- [Tesseract OCR](https://github.com/tesseract-ocr/tesseract) with Japanese language data
-- [Poppler](https://poppler.freedesktop.org/) (provides `pdftoppm` for PDF-to-image conversion)
+- [Java 11+](https://www.java.com/) (required by opendataloader-pdf)
 
 ### macOS (Homebrew)
 
 ```bash
-brew install tesseract tesseract-lang poppler
+brew install openjdk@17
 ```
 
 ### Ubuntu/Debian
 
 ```bash
-sudo apt install tesseract-ocr tesseract-ocr-jpn poppler-utils
+sudo apt install openjdk-17-jre
 ```
 
 ### Windows
 
-#### 1. Install Tesseract
+Download and install [Adoptium JDK 17](https://adoptium.net/).
 
-1. Download the installer from [UB Mannheim](https://github.com/UB-Mannheim/tesseract/wiki)
-2. Run the installer — during setup, check **Additional language data** and select **Japanese**
-3. Note the install path (default: `C:\Program Files\Tesseract-OCR`)
+### Tesseract (optional fallback)
 
-#### 2. Install Poppler
+If you set `USE_OPENDATALOADER=false` in `.env`, the pipeline falls back to Tesseract OCR. In that case you also need:
 
-1. Download from [poppler-windows releases](https://github.com/osber/poppler-windows/releases) (or use `conda install poppler`)
-2. Extract to a folder, e.g. `C:\poppler`
-3. Note the `bin` directory path (e.g. `C:\poppler\Library\bin`)
+- [Tesseract OCR](https://github.com/tesseract-ocr/tesseract) with Japanese language data
+- [Poppler](https://poppler.freedesktop.org/) (provides `pdftoppm` for PDF-to-image conversion)
 
-#### 3. Set paths in `.env`
+<details>
+<summary>Tesseract install instructions</summary>
+
+#### macOS
+
+```bash
+brew install tesseract tesseract-lang poppler
+```
+
+#### Ubuntu/Debian
+
+```bash
+sudo apt install tesseract-ocr tesseract-ocr-jpn poppler-utils
+```
+
+#### Windows
+
+1. Download Tesseract from [UB Mannheim](https://github.com/UB-Mannheim/tesseract/wiki) — select **Japanese** during setup
+2. Download Poppler from [poppler-windows releases](https://github.com/osber/poppler-windows/releases)
+3. Set paths in `.env`:
 
 ```
 POPPLER_PATH=C:\poppler\Library\bin
 TESSERACT_CMD=C:\Program Files\Tesseract-OCR\tesseract.exe
 ```
 
-> You do **not** need to add these to your system PATH — the pipeline reads them from `.env`.
+</details>
 
 ## Setup
 
@@ -96,6 +111,22 @@ On Windows, use a Windows-style path for `PDF_FOLDER`:
 ```
 PDF_FOLDER=C:\Users\YourName\Google Drive\My Drive\検体受付_CIDP\01_初回登録
 ```
+
+#### opendataloader-pdf settings (optional)
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `USE_OPENDATALOADER` | `true` | Set `false` to use Tesseract instead |
+| `OPENDATALOADER_HYBRID` | `false` | Enable AI-backed OCR (best accuracy for scanned PDFs) |
+| `OPENDATALOADER_FORCE_OCR` | `true` | Force OCR even on digitally-created PDFs |
+
+To use hybrid mode (recommended for scanned documents), start the backend first:
+
+```bash
+opendataloader-pdf-hybrid --port 5002
+```
+
+Then set `OPENDATALOADER_HYBRID=true` in `.env`.
 
 ## Usage
 
@@ -152,8 +183,8 @@ Replace `/path/to/auto-sample-registration` with the actual path.
 
 1. Scans `PDF_FOLDER` for `*.pdf` files
 2. Skips files already listed in `processed_log.json`
-3. Converts each PDF page to an image, runs Tesseract OCR (Japanese)
-4. Parses the OCR text to extract: trial name, subject ID, gender, collection date, visit point, test items
+3. Extracts text from each PDF using [opendataloader-pdf](https://github.com/opendataloader-project/opendataloader-pdf) (falls back to Tesseract OCR if unavailable)
+4. Parses the extracted text to extract: trial name, subject ID, gender, collection date, visit point, test items
 5. Expands grouped items (e.g., `【血清分離・血漿分離・DNA】` becomes 3 rows)
 6. Appends rows to the Google Sheet
 7. Records the filename in `processed_log.json` so it won't be reprocessed

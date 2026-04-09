@@ -1,3 +1,4 @@
+opendataloader-pdf[hybrid]
 pdf2image
 pytesseract
 Pillow
